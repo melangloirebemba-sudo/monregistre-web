@@ -44,12 +44,13 @@
     </p>
 
     <div class="cta">
-      <a class="btn" id="download"
-         href="https://github.com/melangloirebemba-sudo/monregistre-web/releases/download/V1.2.0/MonRegistre-1.2.0.apk">
+      <!-- Lien permanent vers la dernière release : GitHub redirige toujours vers son fichier MonRegistre.apk -->
+      <a class="btn" id="download" data-telechargement
+         href="https://github.com/melangloirebemba-sudo/monregistre-web/releases/latest/download/MonRegistre.apk">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3v10.6l3.3-3.3 1.4 1.4L12 17.4l-4.7-5.7 1.4-1.4 3.3 3.3V3h2zM5 19h14v2H5v-2z"/></svg>
         Télécharger l'application
       </a>
-      <p class="meta" id="release-info">Version 1.1.9 pour Android, gratuite pour commencer</p>
+      <p class="meta" id="release-info">Dernière version pour Android, gratuite pour commencer</p>
 
       <a class="btn-whatsapp"
          href="https://chat.whatsapp.com/EX14AOy8iLE2uWjXJ4knBV?s=cl&amp;p=a&amp;mlu=4&amp;ilr=4&amp;iam=2"
@@ -81,8 +82,8 @@
   <a href="a-propos.html">À propos</a>
   <a href="conditions.html">Conditions d'utilisation</a>
   <a href="https://chat.whatsapp.com/EX14AOy8iLE2uWjXJ4knBV?s=cl&amp;p=a&amp;mlu=4&amp;ilr=4&amp;iam=2" target="_blank" rel="noopener">Communauté WhatsApp</a>
-  <a class="drawer-cta"
-     href="https://github.com/melangloirebemba-sudo/monregistre-backend/releases/download/V1.1.9/MonRegistre.apk">
+  <a class="drawer-cta" data-telechargement
+     href="https://github.com/melangloirebemba-sudo/monregistre-web/releases/latest/download/MonRegistre.apk">
     Télécharger l'application
   </a>
 </aside>
@@ -335,22 +336,29 @@
 </footer>
 
 <script>
-  // Version, taille et date réelles de la dernière release GitHub.
+  // Téléchargement toujours à jour : les boutons pointent sur « releases/latest/download/MonRegistre.apk »,
+  // que GitHub redirige vers la dernière release publiée (même sans ce script). Ce script ajoute seulement
+  // la version, la taille et la date de cette dernière release sous le bouton.
   (async () => {
     const repo = 'melangloirebemba-sudo/monregistre-web';
     try {
       const r = await fetch(`https://api.github.com/repos/${repo}/releases/latest`);
       if (!r.ok) return;
       const data = await r.json();
-      const apk = (data.assets || []).find(a => a.name.toLowerCase() === 'monregistre.apk');
+      const apks = (data.assets || []).filter(a => a.name.toLowerCase().endsWith('.apk'));
+      const apk = apks.find(a => a.name.toLowerCase() === 'monregistre.apk') || apks[0];
       if (!apk) return;
-      document.getElementById('download').href = apk.browser_download_url;
-      const mo = (apk.size / 1048576).toFixed(0);
-      const date = new Date(data.published_at).toLocaleDateString('fr-FR');
+      // Fichier portant un autre nom que MonRegistre.apk : lien direct vers celui-ci
+      if (apk.name.toLowerCase() !== 'monregistre.apk') {
+        document.querySelectorAll('[data-telechargement]').forEach(a => { a.href = apk.browser_download_url; });
+      }
+      const version = String(data.tag_name || '').replace(/^v/i, '');
+      const mo = Math.round(apk.size / 1048576);
+      const date = new Date(data.published_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
       document.getElementById('release-info').textContent =
-        `Version ${data.tag_name}, ${mo} Mo, publiée le ${date}, pour Android`;
+        `Version ${version} · ${mo} Mo · publiée le ${date} · pour Android`;
     } catch (e) {
-      /* hors ligne ou API indisponible : on garde le texte par défaut */
+      /* hors ligne ou API indisponible : le bouton fonctionne quand même, on garde le texte par défaut */
     }
   })();
 </script>
